@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO="Danceiny/wtool"
 BINARY_NAME="wtool"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 DEFAULT_VERSION="v0.1.0"
 
 # Detect OS and architecture
@@ -96,6 +96,15 @@ download_and_install() {
         exit 1
     fi
     
+    # Ensure install directory exists
+    if [ ! -d "$INSTALL_DIR" ]; then
+        echo "Creating ${INSTALL_DIR}..."
+        mkdir -p "$INSTALL_DIR" 2>/dev/null || {
+            echo "Failed to create ${INSTALL_DIR}. Please create it manually or set INSTALL_DIR." >&2
+            exit 1
+        }
+    fi
+    
     # Install
     echo "Installing to ${INSTALL_DIR}..."
     if [ -w "$INSTALL_DIR" ]; then
@@ -155,9 +164,11 @@ main() {
     
     echo
     echo "Next steps:"
-    echo "  1. Run 'wtool doctor' to check your environment"
-    echo "  2. Run 'wtool setup hook --global' to install git hooks"
-    echo "  3. Run 'wtool init' in any worktree to initialize it"
+    echo "  1. Ensure ${INSTALL_DIR} is in your PATH:"
+    echo "     export PATH="${INSTALL_DIR}:\$PATH""
+    echo "  2. Run 'wtool doctor' to check your environment"
+    echo "  3. Run 'wtool setup hook --global' to install git hooks"
+    echo "  4. Run 'wtool init' in any worktree to initialize it"
 }
 
 main "$@"
