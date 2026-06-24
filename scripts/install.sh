@@ -31,23 +31,39 @@ detect_platform() {
     echo "${os}_${arch}"
 }
 
-# Get latest release version (fallback to default if API fails)
+# Get latest release version (with multiple fallbacks)
 get_latest_version() {
     local version=""
     
-    # Try GitHub API first
-    version=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
-        grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    # Try GitHub API first (often rate-limited)
+    local api_response
+    api_response=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null || true)
+    if [ -n "$api_response" ]; then
+        version=$(echo "$api_response" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    fi
     
-    # Fallback: try gh CLI if available
+    # Fallback 1: try gh CLI if available
     if [ -z "$version" ] && command -v gh >/dev/null 2>&1; then
         version=$(gh release list --repo "${REPO}" --limit 1 2>/dev/null | awk '{print $1}')
+    fi
+    
+    # Fallback 2: scrape from GitHub releases page HTML
+    if [ -z "$version" ]; then
+        local html_version
+        html_version=$(curl -fsSL "https://github.com/${REPO}/releases" 2>/dev/null | \
+            grep -oE 'href="/${REPO}/releases/tag/[^"]+' | \
+            head -1 | \
+            sed -E 's|.*/tag/||')
+        if [ -n "$html_version" ]; then
+            version="$html_version"
+        fi
     fi
     
     # Final fallback: use default version
     if [ -z "$version" ]; then
         version="${DEFAULT_VERSION}"
-        echo "Warning: Could not fetch latest version, using ${version}" >&2
+        echo "Warning: Could not fetch latest version from GitHub (API rate limited), using ${version}" >&2
+        echo "To install a specific version, run: VERSION=v0.x.x curl ... | bash" >&2
     fi
     
     echo "$version"
@@ -63,7 +79,6 @@ download_and_install() {
     download_url="https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}_${platform}.tar.gz"
     
     echo "Downloading wtool ${version} for ${platform}..."
-    echo "URL: ${download_url}"
     
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
