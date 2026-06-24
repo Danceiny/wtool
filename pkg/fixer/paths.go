@@ -45,6 +45,8 @@ func (f *PathFixer) applyFix(fix detector.PathFix) error {
 		return f.stripCwdPrefix(fix.File)
 	case "rewrite_paths":
 		return f.rewritePaths(fix.File)
+	case "rewrite_absolute_to_relative":
+		return f.stripCwdPrefix(fix.File)
 	default:
 		return fmt.Errorf("unknown path fix strategy: %s", fix.Strategy)
 	}
