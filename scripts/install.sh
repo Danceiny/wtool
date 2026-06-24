@@ -28,7 +28,7 @@ detect_platform() {
         *) echo "Unsupported OS: $os" >&2; exit 1 ;;
     esac
     
-    echo "${os}_${arch}"
+    echo "${os}-${arch}"
 }
 
 # Get latest release version (with multiple fallbacks)
@@ -76,10 +76,9 @@ download_and_install() {
     version="$1"
     platform="$2"
     
-    download_url="https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}_${platform}.tar.gz"
+    download_url="https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}-${platform}.tar.gz"
     
     echo "Downloading wtool ${version} for ${platform}..."
-    echo "URL: ${download_url}"
     
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
