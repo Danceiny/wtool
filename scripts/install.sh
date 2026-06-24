@@ -118,14 +118,14 @@ install_completions() {
     
     case "$shell" in
         bash)
-            if [ -d "/usr/local/etc/bash_completion.d" ]; then
+            if [ -d "/usr/local/etc/bash_completion.d" ] && [ -w "/usr/local/etc/bash_completion.d" ]; then
                 wtool completion bash > /usr/local/etc/bash_completion.d/wtool 2>/dev/null || true
-            elif [ -d "/etc/bash_completion.d" ]; then
+            elif [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
                 wtool completion bash > /etc/bash_completion.d/wtool 2>/dev/null || true
             fi
             ;;
         zsh)
-            if [ -d "/usr/local/share/zsh/site-functions" ]; then
+            if [ -d "/usr/local/share/zsh/site-functions" ] && [ -w "/usr/local/share/zsh/site-functions" ]; then
                 wtool completion zsh > /usr/local/share/zsh/site-functions/_wtool 2>/dev/null || true
             fi
             ;;
