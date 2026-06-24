@@ -51,7 +51,7 @@ get_latest_version() {
     if [ -z "$version" ]; then
         local html_version
         html_version=$(curl -fsSL "https://github.com/${REPO}/releases" 2>/dev/null | \
-            grep -oE 'href="/${REPO}/releases/tag/[^"]+' | \
+            grep -oE 'href="/'"${REPO}"'/releases/tag/[^"]+' | \
             head -1 | \
             sed -E 's|.*/tag/||')
         if [ -n "$html_version" ]; then
@@ -79,6 +79,7 @@ download_and_install() {
     download_url="https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}_${platform}.tar.gz"
     
     echo "Downloading wtool ${version} for ${platform}..."
+    echo "URL: ${download_url}"
     
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
