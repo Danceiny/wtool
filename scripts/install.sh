@@ -81,7 +81,7 @@ download_and_install() {
     echo "Downloading wtool ${version} for ${platform}..."
     
     tmp_dir=$(mktemp -d)
-    trap 'rm -rf "$tmp_dir"' EXIT
+    trap 'rm -rf "\${tmp_dir}"' EXIT
     
     # Try to download with better error handling
     if ! curl -fsSL --retry 3 --retry-delay 2 "$download_url" | tar -xz -C "$tmp_dir" 2>/dev/null; then
