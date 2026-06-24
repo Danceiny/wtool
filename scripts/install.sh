@@ -51,7 +51,7 @@ get_latest_version() {
     if [ -z "$version" ]; then
         local html_version
         html_version=$(curl -fsSL "https://github.com/${REPO}/releases" 2>/dev/null | \
-            grep -oE 'href="/'"${REPO}"'/releases/tag/[^"]+' | \
+            grep -oE 'href="/Danceiny/wtool/releases/tag/[^"]+' | \
             head -1 | \
             sed -E 's|.*/tag/||')
         if [ -n "$html_version" ]; then
