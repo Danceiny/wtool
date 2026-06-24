@@ -7,6 +7,7 @@ set -euo pipefail
 REPO="Danceiny/wtool"
 BINARY_NAME="wtool"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+DEFAULT_VERSION="v0.1.0"
 
 # Detect OS and architecture
 detect_platform() {
@@ -30,15 +31,23 @@ detect_platform() {
     echo "${os}_${arch}"
 }
 
-# Get latest release version
+# Get latest release version (fallback to default if API fails)
 get_latest_version() {
-    local version
+    local version=""
+    
+    # Try GitHub API first
     version=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
         grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     
+    # Fallback: try gh CLI if available
+    if [ -z "$version" ] && command -v gh >/dev/null 2>&1; then
+        version=$(gh release list --repo "${REPO}" --limit 1 2>/dev/null | awk '{print $1}')
+    fi
+    
+    # Final fallback: use default version
     if [ -z "$version" ]; then
-        echo "Failed to get latest version" >&2
-        exit 1
+        version="${DEFAULT_VERSION}"
+        echo "Warning: Could not fetch latest version, using ${version}" >&2
     fi
     
     echo "$version"
@@ -54,14 +63,21 @@ download_and_install() {
     download_url="https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}_${platform}.tar.gz"
     
     echo "Downloading wtool ${version} for ${platform}..."
+    echo "URL: ${download_url}"
     
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
     
-    curl -fsSL "$download_url" | tar -xz -C "$tmp_dir"
+    # Try to download with better error handling
+    if ! curl -fsSL --retry 3 --retry-delay 2 "$download_url" | tar -xz -C "$tmp_dir" 2>/dev/null; then
+        echo "Download failed. The release may not have binary artifacts yet." >&2
+        echo "You can build from source instead:" >&2
+        echo "  git clone https://github.com/${REPO}.git && cd wtool && make build && make install" >&2
+        exit 1
+    fi
     
     if [ ! -f "$tmp_dir/$BINARY_NAME" ]; then
-        echo "Download failed or binary not found in archive" >&2
+        echo "Binary not found in archive" >&2
         exit 1
     fi
     
